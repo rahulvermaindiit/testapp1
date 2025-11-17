@@ -1,10 +1,14 @@
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
 import { formatEmailName } from '../../utils/helpers';
 import Button from '../../components/Button';
 import Spacer from '../../components/Spacer';
+import BottomMenu from '../../components/BottomMenu';
+import type { AppStackParamList } from '../../navigation/AppStack';
 
 const planCards = [
   {
@@ -27,17 +31,11 @@ const quickStats = [
   { label: 'Calories', value: '540', sub: 'Burned' },
 ];
 
-const menuItems = [
-  { label: 'Home', icon: '🏠', active: true },
-  { label: 'Plan', icon: '🗓️', active: false },
-  { label: 'Add', icon: '+', active: false, primary: true },
-  { label: 'Stats', icon: '📊', active: false },
-  { label: 'Profile', icon: '😊', active: false },
-];
-
 const DashboardScreen = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
   const styles = StyleSheet.create({
     root: {
@@ -191,73 +189,6 @@ const DashboardScreen = () => {
       marginTop: 2,
       color: '#7A7C93',
     },
-    menuWrapper: {
-      paddingHorizontal: 16,
-      paddingBottom: 24,
-      paddingTop: 12,
-      backgroundColor: '#F3F2FF',
-    },
-    menuContainer: {
-      marginTop: 0,
-      backgroundColor: '#FFFFFF',
-      borderRadius: 36,
-      paddingHorizontal: 18,
-      paddingVertical: 12,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: '#ECEAFD',
-      shadowColor: '#C5C1EA',
-      shadowOpacity: 0.35,
-      shadowRadius: 24,
-      shadowOffset: { width: 0, height: 14 },
-    },
-    menuItem: {
-      flex: 1,
-      alignItems: 'center',
-    },
-    menuIconBase: {
-      width: 46,
-      height: 46,
-      borderRadius: 18,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 6,
-      borderWidth: 1,
-      borderColor: '#E0DEFF',
-      backgroundColor: '#F3F2FF',
-    },
-    menuIconActive: {
-      backgroundColor: '#645CFF',
-      borderColor: '#645CFF',
-    },
-    menuIconPrimary: {
-      width: 60,
-      height: 60,
-      borderRadius: 24,
-      backgroundColor: '#1E1F2E',
-      borderWidth: 0,
-    },
-    menuIconText: {
-      fontSize: 20,
-      color: '#8F90A6',
-    },
-    menuIconTextActive: {
-      color: '#FFFFFF',
-    },
-    menuIconTextPrimary: {
-      fontSize: 28,
-      color: '#FFFFFF',
-    },
-    menuLabel: {
-      fontSize: 11,
-      fontWeight: '600',
-      color: '#A0A1B3',
-    },
-    menuLabelActive: {
-      color: '#1E1F2E',
-    },
   });
 
   return (
@@ -343,7 +274,7 @@ const DashboardScreen = () => {
         <Spacer size="xl" />
         <Button
           title="Explore classes"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('Explore')}
           variant="primary"
         />
         <Spacer size="lg" />
@@ -354,35 +285,7 @@ const DashboardScreen = () => {
         />
       </ScrollView>
 
-      <View style={styles.menuWrapper}>
-        <View style={styles.menuContainer}>
-          {menuItems.map((item) => {
-            const iconWrapperStyles = [
-              styles.menuIconBase,
-              item.active && styles.menuIconActive,
-              item.primary && styles.menuIconPrimary,
-            ];
-            const iconTextStyles = [
-              styles.menuIconText,
-              (item.active || item.primary) && styles.menuIconTextActive,
-              item.primary && styles.menuIconTextPrimary,
-            ];
-            const labelStyles = [
-              styles.menuLabel,
-              item.active && styles.menuLabelActive,
-            ];
-
-            return (
-              <View key={item.label} style={styles.menuItem}>
-                <View style={iconWrapperStyles}>
-                  <Text style={iconTextStyles}>{item.icon}</Text>
-                </View>
-                <Text style={labelStyles}>{item.label}</Text>
-              </View>
-            );
-          })}
-        </View>
-      </View>
+      <BottomMenu active="Dashboard" />
     </View>
   );
 };
