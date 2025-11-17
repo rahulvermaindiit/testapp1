@@ -5,28 +5,39 @@
  * @format
  */
 
-import { StatusBar, StyleSheet, useColorScheme } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import LoginScreen from './src/screens/auth/LoginScreen';
+import React, { useEffect } from 'react';
+import { StatusBar, useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider } from 'react-redux';
+import RootNavigator from './src/navigation/RootNavigator';
+import { store } from './src/redux/store';
+import { ThemeProvider } from './src/theme';
+import { useAppDispatch } from './src/redux/hooks';
+import { restoreSession } from './src/redux/slices/authSlice';
+
+const AppBootstrap = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(restoreSession());
+  }, [dispatch]);
+
+  return <RootNavigator />;
+};
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <SafeAreaView style={styles.container}>
-        <LoginScreen />
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <Provider store={store}>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+          <AppBootstrap />
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-});
 
 export default App;

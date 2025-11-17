@@ -1,219 +1,170 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Alert,
-  Image,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import Card from '../../components/Card';
+import Input from '../../components/Input';
+import Spacer from '../../components/Spacer';
+import Button from '../../components/Button';
+import Loader from '../../components/Loader';
+import { useTheme } from '../../theme';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { RootState } from '../../redux/store';
+import { loginUser } from '../../redux/slices/authSlice';
+import { isEmail, minLength, isRequired } from '../../utils/validators';
 
-const ILLUSTRATION =
-  'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80';
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=1200&q=80';
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [secureEntry, setSecureEntry] = useState(true);
+  const dispatch = useAppDispatch();
+  const authState = useAppSelector((state: RootState) => state.auth);
+  const { colors, spacing, typography } = useTheme();
 
-  const onLogin = () => {
-    Alert.alert('Login', `Email: ${email || 'Not provided'}`);
+  const [email, setEmail] = useState('demo@company.com');
+  const [password, setPassword] = useState('password123');
+  const [touched, setTouched] = useState(false);
+
+  const errors = useMemo(() => {
+    const list: { email?: string; password?: string } = {};
+    if (!isRequired(email) || !isEmail(email)) {
+      list.email = 'Enter a valid email';
+    }
+    if (!minLength(password, 6)) {
+      list.password = 'Password must be at least 6 characters';
+    }
+    return list;
+  }, [email, password]);
+
+  const handleLogin = () => {
+    setTouched(true);
+    if (Object.keys(errors).length) {
+      return;
+    }
+    dispatch(loginUser({ email: email.trim(), password }));
   };
+
+  const styles = StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    heroWrapper: {
+      height: 260,
+      borderBottomLeftRadius: spacing.xl,
+      borderBottomRightRadius: spacing.xl,
+      overflow: 'hidden',
+      marginBottom: -spacing.xl,
+    },
+    heroOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      padding: spacing.lg,
+      justifyContent: 'flex-end',
+    },
+    content: {
+      flexGrow: 1,
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.xl,
+    },
+    title: {
+      fontSize: typography.heading,
+      fontWeight: typography.weightBold,
+      color: colors.text,
+    },
+    helperText: {
+      color: colors.textMuted,
+      marginTop: spacing.sm,
+    },
+    subtitle: {
+      marginTop: spacing.sm,
+      color: colors.textMuted,
+      fontSize: typography.subtitle,
+    },
+    errorText: {
+      color: colors.danger,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+  });
+
+  const isLoading = authState.status === 'loading';
 
   return (
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <Image source={{ uri: ILLUSTRATION }} style={styles.hero} />
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <View style={styles.heroWrapper}>
+          <ImageBackground
+            source={{ uri: HERO_IMAGE }}
+            resizeMode="cover"
+            style={{ flex: 1 }}
+          >
+            <View style={styles.heroOverlay}>
+              <Text style={styles.title}>Welcome back</Text>
+              <Text style={styles.subtitle}>
+                Enter the demo credentials to explore the dashboard.
+              </Text>
+            </View>
+          </ImageBackground>
+        </View>
 
-        <View style={styles.card}>
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>
-            Sign in to continue exploring the app.
-          </Text>
-
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
+        <View style={styles.content}>
+          <Card>
+            <Input
+              label="Email"
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="you@example.com"
-              placeholderTextColor="#9AA0B4"
-              style={styles.input}
-              textContentType="emailAddress"
+              placeholder="demo@company.com"
+              value={email}
+              onChangeText={setEmail}
+              editable={!isLoading}
+              error={touched ? errors.email : undefined}
             />
-          </View>
 
-          <View style={styles.fieldGroup}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Password</Text>
-              <Pressable onPress={() => setSecureEntry((prev) => !prev)}>
-                <Text style={styles.toggle}>
-                  {secureEntry ? 'Show' : 'Hide'}
-                </Text>
-              </Pressable>
-            </View>
-
-            <TextInput
+          <Input
+              label="Password"
+              secureTextEntry
+              autoCapitalize="none"
+              placeholder="password123"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry={secureEntry}
-              autoCapitalize="none"
-              placeholder="••••••••"
-              placeholderTextColor="#9AA0B4"
-              style={styles.input}
-              textContentType="password"
+              editable={!isLoading}
+              error={touched ? errors.password : undefined}
             />
-          </View>
 
-          <Pressable style={styles.rememberRow}>
-            <View style={styles.checkbox} />
-            <Text style={styles.rememberText}>Remember me</Text>
-          </Pressable>
+            <Text style={styles.helperText}>
+              Demo access: demo@company.com / password123
+            </Text>
 
-          <Pressable style={styles.primaryButton} onPress={onLogin}>
-            <Text style={styles.primaryText}>Log In</Text>
-          </Pressable>
+            {authState.error ? (
+              <Text style={styles.errorText}>{authState.error}</Text>
+            ) : null}
 
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Forgot password?</Text>
-            <Pressable>
-              <Text style={styles.link}>Reset</Text>
-            </Pressable>
-          </View>
+            <Spacer size="lg" />
+            <Button
+              title="Log In"
+              onPress={handleLogin}
+              loading={isLoading}
+              disabled={isLoading}
+            />
+          </Card>
 
-          {/* <View style={styles.footerRow}>
-            <Text style={styles.footerText}>New here?</Text>
-            <Pressable>
-              <Text style={styles.link}>Create account</Text>
-            </Pressable>
-          </View> */}
+          <Spacer size="xl" />
+          {isLoading ? <Loader message="Loading demo experience..." /> : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingBottom: 32,
-  },
-  hero: {
-    width: '100%',
-    height: 280,
-  },
-  card: {
-    marginHorizontal: 24,
-    marginTop: -48,
-    borderRadius: 24,
-    padding: 24,
-    backgroundColor: '#111827',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#F8FAFC',
-  },
-  subtitle: {
-    marginTop: 4,
-    fontSize: 15,
-    color: '#CBD5F5',
-  },
-  fieldGroup: {
-    marginTop: 20,
-  },
-  label: {
-    color: '#CBD5F5',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  toggle: {
-    color: '#60A5FA',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  input: {
-    marginTop: 8,
-    backgroundColor: '#1F2937',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#F8FAFC',
-    fontSize: 16,
-  },
-  rememberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#64748B',
-    marginRight: 8,
-  },
-  rememberText: {
-    color: '#CBD5F5',
-    fontSize: 13,
-  },
-  primaryButton: {
-    marginTop: 24,
-    backgroundColor: '#2563EB',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryText: {
-    color: '#F8FAFC',
-    fontWeight: '700',
-    fontSize: 16,
-    letterSpacing: 0.4,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  footerText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    marginRight: 4,
-  },
-  link: {
-    color: '#60A5FA',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
 
 export default LoginScreen;
 
